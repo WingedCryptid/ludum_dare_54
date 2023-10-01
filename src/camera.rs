@@ -10,7 +10,13 @@ impl Plugin for CameraPlugin {
 
 fn spawn_camera(mut commands: Commands) {
     let camera = Camera2dBundle {
-        transform: Transform::from_xyz(-2.0, 2.5, -10.0),
+        /*projection: OrthographicProjection {
+            near: -1000.0,
+            far: 1000.0,
+            scale: 5.0,
+            ..default()
+        },*/
+        transform: Transform::from_xyz(0.0, 0.0, 0.0),
         ..default()
     };
 
