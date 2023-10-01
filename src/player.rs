@@ -46,10 +46,17 @@ fn spawn_player(
 fn move_player(
         keys : Res<Input<KeyCode>>,
         time : Res<Time>,
-        mut player_q : Query<& Player>,
+        player_q : Query<& Player>,
         mut player_trans_q : Query<&mut Transform, With<Player>>){
 
     let mut player_transform = player_trans_q.get_single_mut().unwrap();
+
+    let direction = get_direction(&keys);
+
+    player_transform.translation += direction * player_q.get_single().unwrap().speed * time.delta_seconds();
+}
+
+fn get_direction(keys : &Input<KeyCode>) -> Vec3{
     let mut direction = Vec3::zeroed();
 
     if keys.pressed(KeyCode::D){
@@ -61,9 +68,9 @@ fn move_player(
     if keys.pressed(KeyCode::A){
         direction += Vec3{x:-1f32, y:0f32, z:0f32};
     }
-    if keys.pressed(KeyCode::S){
-        direction += Vec3{x:0f32, y:-1f32, z:0f32};
+    if keys.pressed(KeyCode::S) {
+        direction += Vec3 { x: 0f32, y: -1f32, z: 0f32 };
     }
 
-    player_transform.translation += direction * player_q.get_single().unwrap().speed * time.delta_seconds();
+    return direction;
 }
