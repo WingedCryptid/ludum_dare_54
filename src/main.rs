@@ -1,3 +1,5 @@
+mod player;
+
 use bevy::prelude::*;
 
 fn main() {
