@@ -30,6 +30,6 @@ fn spawn_game(mut commands: Commands) {
 
 fn try_exit(mut game: ResMut<Game>, mut exit: EventWriter<AppExit>) {
     if game.check_end_condition() {
-        exit.send(AppExit);
+        //exit.send(AppExit);
     }
 }
