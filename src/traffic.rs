@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use std::ops::Range;
 use rand::Rng;
-use crate::common::MovingObject;
+use crate::common::{MovingObject, SpeedLabel};
 use crate::game::Game;
 
 pub struct TrafficPlugin;
@@ -37,7 +37,7 @@ struct OffenderBundle {
 
 #[derive(Bundle)]
 struct TrafficUnitBundle {
-    sprite_bundle: SpriteBundle,
+    spatial_bundle: SpatialBundle,
     traffic_unit: TrafficUnit,
     moving_object: MovingObject,
 }
@@ -60,6 +60,7 @@ fn spawn_traffic(
 
     for _ in 0..traffic_settings.units_count {
         let unit_speed = rng.gen_range(traffic_settings.unit_speed.clone());
+        let unit_speed = (unit_speed * 10f32).round() / 10f32;
         let unit_color = Color::YELLOW;
         let unit_size = Vec2::new(25f32, 25f32);
         let unit_position = Vec3::new(
@@ -67,18 +68,21 @@ fn spawn_traffic(
             rng.gen_range(traffic_settings.unit_spawn_y.clone()),
             0.0);
 
-        let traffic_unit = spawn_traffic_unit(
+        let traffic_unit = create_traffic_unit(
             unit_color,
             unit_size,
             unit_position,
             unit_speed,
         );
-
-        commands.spawn(traffic_unit);
+        
+        commands.spawn(traffic_unit.0)
+            .with_children(|parent| { parent.spawn(traffic_unit.1); })
+                .with_children(|parent| { parent.spawn(traffic_unit.2); });
     }
 
     for _ in 0..traffic_settings.offenders_count {
         let unit_speed = rng.gen_range(traffic_settings.offender_speed.clone());
+        let unit_speed = (unit_speed * 10f32).round() / 10f32;
         let unit_color = Color::RED;
         let unit_size = Vec2::new(25f32, 25f32);
         let unit_position = Vec3::new(
@@ -86,14 +90,16 @@ fn spawn_traffic(
             rng.gen_range(traffic_settings.unit_spawn_y.clone()),
             0.0);
 
-        let offender = spawn_offender(
+        let offender = create_offender(
             unit_color,
             unit_size,
             unit_position,
             unit_speed,
         );
 
-        commands.spawn(offender);
+        commands.spawn(offender.0)
+            .with_children(|parent| { parent.spawn(offender.1); })
+                .with_children(|parent| { parent.spawn(offender.2); });
     }
 }
 
@@ -122,39 +128,66 @@ fn try_cross_dead_zone(
     }
 }
 
-fn spawn_offender(
+fn create_offender(
     color: Color,
     size: Vec2,
     position: Vec3,
     unit_speed: f32,
-) -> OffenderBundle {
-    return OffenderBundle {
-        traffic_unit_bundle: spawn_traffic_unit(
-            color, 
-            size, 
-            position, 
-            unit_speed),
-        offender: Offender,
-    };
+) -> (OffenderBundle, SpriteBundle, (Text2dBundle, SpeedLabel)) {
+
+    let traffic_unit = create_traffic_unit(
+        color, 
+        size, 
+        position, 
+        unit_speed);
+
+    return (
+        OffenderBundle {
+            traffic_unit_bundle: traffic_unit.0,
+            offender: Offender
+        },
+        traffic_unit.1,
+        traffic_unit.2,
+    );
 }
 
-fn spawn_traffic_unit(
+fn create_traffic_unit(
     color: Color,
     size: Vec2,
     position: Vec3,
     unit_speed: f32,
-) -> TrafficUnitBundle {
-    return TrafficUnitBundle {
-        sprite_bundle: SpriteBundle {
-            sprite: Sprite { 
-                color: color,
-                custom_size: Option::Some(size),
-                ..default()
-            },
-            transform: Transform::from_translation(position),
-            ..default()
-        },
+) -> (TrafficUnitBundle, SpriteBundle, (Text2dBundle, SpeedLabel)) {
+
+    let traffic_unit_bundle = TrafficUnitBundle {
+        spatial_bundle: SpatialBundle::default(),
         traffic_unit: TrafficUnit,
         moving_object: MovingObject { speed: unit_speed }
-    }
+    };
+
+    let sprite_bundle = SpriteBundle {
+        sprite: Sprite { 
+            color,
+            custom_size: Option::Some(size),
+            ..default()
+        },
+        transform: Transform::from_translation(position),
+        ..default()
+    };
+
+    let text_bundle = (
+        Text2dBundle {
+        text: Text::from_section(
+            "KOQ", 
+            TextStyle {
+                font_size: 24.0,
+                color: Color::AZURE,
+                ..default()
+            }),
+            transform: Transform::from_translation(position + Vec3::Z),
+            ..default()
+        },
+        SpeedLabel
+    );
+    
+    return (traffic_unit_bundle, sprite_bundle, text_bundle);
 }
