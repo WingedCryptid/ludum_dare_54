@@ -1,6 +1,7 @@
-mod player;
+mod common;
 mod traffic;
 mod camera;
+mod player;
 
 use bevy::prelude::*;
 use crate::traffic::TrafficPlugin;
